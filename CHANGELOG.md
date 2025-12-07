@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Proxy Bidirectional Communication Bug**: Fixed `handle_sv1_upstream` discarding the downstream write handle, preventing SV2 responses from being sent back to miners
+
 ## [0.4.0] - 2025-12-07
 
 ### Added

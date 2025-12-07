@@ -8,7 +8,7 @@ use serde::Deserialize;
 
 // Stratum V2 crates
 use stratum_core::{
-    codec_sv2::{HandshakeRole, StandardEitherFrame, StandardSv2Frame},
+    codec_sv2::{HandshakeRole, StandardEitherFrame},
     framing_sv2::framing::Frame,
     noise_sv2::{Initiator, Responder},
     parsers_sv2::AnyMessage,
@@ -37,15 +37,8 @@ impl std::str::FromStr for Secp256k1PublicKey {
     }
 }
 
-impl Secp256k1PublicKey {
-    pub fn into_bytes(self) -> [u8; 32] {
-        self.0.serialize()
-    }
-}
-
 // Type aliases
 type Message = AnyMessage<'static>;
-type Sv2Frame = StandardSv2Frame<Message>;
 
 // Error type for networking operations
 #[derive(Debug)]
@@ -533,7 +526,12 @@ async fn handle_sv1_upstream(
                 match line_res {
                     Ok(line) => {
                         info!("Received from upstream (SV1): {}", line);
-                        // TODO: Translate SV1 response -> SV2 message -> d_write
+                        // TODO: Parse SV1 JSON response and translate to appropriate SV2 messages
+                        // For now, just log that we received a response
+                        // In a full implementation, this would:
+                        // 1. Parse the JSON response
+                        // 2. Convert to appropriate SV2 protocol messages
+                        // 3. Send via d_write.write_frame()
                     }
                     Err(e) => return Err(anyhow::anyhow!("Upstream read error: {:?}", e)),
                 }
