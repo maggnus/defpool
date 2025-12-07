@@ -32,12 +32,12 @@ pub fn start_profitability_monitor<P, D>(
                     if let Some(best) = scores.iter()
                         .max_by(|a, b| a.score.partial_cmp(&b.score).unwrap_or(std::cmp::Ordering::Equal))
                     {
-                        let current_pool = state.current_pool.read().unwrap().clone();
+                        let current_target = state.current_target.read().unwrap().clone();
                         
                         // Check if we should switch
-                        if best.pool_name != current_pool {
+                        if best.target_name != current_target {
                             let current_score = scores.iter()
-                                .find(|s| s.pool_name == current_pool)
+                                .find(|s| s.target_name == current_target)
                                 .map(|s| s.score)
                                 .unwrap_or(0.0);
 
@@ -46,13 +46,13 @@ pub fn start_profitability_monitor<P, D>(
                             if improvement_percent >= threshold_percent {
                                 info!(
                                     "Switching from {} to {} (improvement: {:.2}%)",
-                                    current_pool, best.pool_name, improvement_percent
+                                    current_target, best.target_name, improvement_percent
                                 );
-                                state.switch_pool(best.pool_name.clone());
+                                state.switch_target(best.target_name.clone());
                             } else {
                                 info!(
-                                    "Pool {} is better but below threshold ({:.2}% < {}%)",
-                                    best.pool_name, improvement_percent, threshold_percent
+                                    "Target {} is better but below threshold ({:.2}% < {}%)",
+                                    best.target_name, improvement_percent, threshold_percent
                                 );
                             }
                         }

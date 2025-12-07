@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
-use crate::config::{Config, Pool};
+use crate::config::{Config, MiningTarget};
 use crate::profitability::ProfitabilityScore;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -13,42 +13,42 @@ pub struct Target {
 
 #[derive(Clone)]
 pub struct AppState {
-    pub current_pool: Arc<RwLock<String>>,
+    pub current_target: Arc<RwLock<String>>,
     pub last_switch_time: Arc<RwLock<Instant>>,
     pub profitability_scores: Arc<RwLock<Vec<ProfitabilityScore>>>,
-    pub pools: Vec<Pool>,
+    pub targets: Vec<MiningTarget>,
 }
 
 impl AppState {
     pub fn new(config: Config) -> Self {
-        let initial_pool = config.pools.first()
-            .expect("At least one pool must be configured")
+        let initial_target = config.targets.first()
+            .expect("At least one mining target must be configured")
             .name.clone();
 
         Self {
-            current_pool: Arc::new(RwLock::new(initial_pool)),
+            current_target: Arc::new(RwLock::new(initial_target)),
             last_switch_time: Arc::new(RwLock::new(Instant::now())),
             profitability_scores: Arc::new(RwLock::new(Vec::new())),
-            pools: config.pools,
+            targets: config.targets,
         }
     }
 
     pub fn get_current_target(&self) -> Target {
-        let current_pool_name = self.current_pool.read().unwrap().clone();
-        let pool = self.pools.iter()
-            .find(|p| p.name == current_pool_name)
-            .expect("Current pool not found in configuration");
+        let current_target_name = self.current_target.read().unwrap().clone();
+        let mining_target = self.targets.iter()
+            .find(|t| t.name == current_target_name)
+            .expect("Current target not found in configuration");
 
         Target {
-            address: pool.address.clone(),
+            address: mining_target.address.clone(),
             pubkey: None, // V1 doesn't need pubkey
             protocol: "sv1".to_string(),
         }
     }
 
-    pub fn switch_pool(&self, new_pool: String) {
-        let mut current = self.current_pool.write().unwrap();
-        *current = new_pool;
+    pub fn switch_target(&self, new_target: String) {
+        let mut current = self.current_target.write().unwrap();
+        *current = new_target;
         *self.last_switch_time.write().unwrap() = Instant::now();
     }
 

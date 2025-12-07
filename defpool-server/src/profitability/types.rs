@@ -10,19 +10,19 @@ pub struct CoinMetrics {
     pub block_reward: f64,
 }
 
-/// Profitability score for a pool
+/// Profitability score for a mining target
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProfitabilityScore {
-    pub pool_name: String,
+    pub target_name: String,
     pub coin: String,
     pub score: f64,
     pub timestamp: SystemTime,
 }
 
 impl ProfitabilityScore {
-    pub fn new(pool_name: String, coin: String, score: f64) -> Self {
+    pub fn new(target_name: String, coin: String, score: f64) -> Self {
         Self {
-            pool_name,
+            target_name,
             coin,
             score,
             timestamp: SystemTime::now(),

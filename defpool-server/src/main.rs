@@ -48,17 +48,20 @@ async fn main() -> anyhow::Result<()> {
     let calculator = Arc::new(ProfitabilityCalculator::new(
         price_provider,
         difficulty_provider,
-        config.pools.clone(),
+        config.targets.clone(),
     ));
 
     // Start background profitability monitor
     start_profitability_monitor(state.clone(), calculator, config);
 
-    // Build API routes
+    // Build API routes with versioning
     let app = Router::new()
-        .route("/target", get(api::get_target))
-        .route("/pools", get(api::get_pools))
-        .route("/current-pool", get(api::get_current_pool))
+        // V1 API routes
+        .route("/api/v1/target", get(api::get_current_target))
+        .route("/api/v1/targets", get(api::list_targets))
+        .route("/api/v1/targets/current", get(api::get_current_target_name))
+        // Legacy routes (deprecated, for backward compatibility)
+        .route("/target", get(api::get_current_target))
         .with_state(state);
 
     info!("DefPool Server listening on {}", listen_address);

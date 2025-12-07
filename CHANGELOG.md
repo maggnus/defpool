@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-12-07
+
+### Changed
+- **BREAKING**: Refactored "pool" terminology to "target" for abstraction
+  - `Pool` struct renamed to `MiningTarget`
+  - Added `TargetType` enum (`pool` or `daemon`)
+  - Configuration now uses `[[targets]]` instead of `[[pools]]`
+  - API endpoints restructured with versioning
+  
+- **API Restructuring**
+  - New versioned endpoints: `/api/v1/target`, `/api/v1/targets`, `/api/v1/targets/current`
+  - Legacy endpoint `/target` maintained for backward compatibility
+  - All endpoints now follow RESTful best practices
+  
+### Added
+- `target_type` field to distinguish between external pools and self-hosted daemons
+- `daemon_rpc_url` field for future daemon integration
+- API standards workflow documentation
+- Comprehensive API documentation with examples
+
+### Technical Details
+- **Architecture**: More abstract and flexible for future daemon support
+- **Configuration**: `type = "pool"` or `type = "daemon"`
+- **API Versioning**: `/api/v1/` prefix for all new endpoints
+
+
 ## [0.2.0] - 2025-12-07
 
 ### Added

@@ -2,14 +2,16 @@ listen_address = "0.0.0.0:3000"
 profitability_check_interval_secs = 60
 switch_threshold_percent = 5.0
 
-[[pools]]
+[[targets]]
 name = "supportxmr"
+type = "pool"
 address = "pool-sg.supportxmr.com:3333"
 coin = "XMR"
 algorithm = "RandomX"
 
-[[pools]]
+[[targets]]
 name = "moneroocean"
+type = "pool"
 address = "gulf.moneroocean.stream:10128"
 coin = "XMR"
 algorithm = "RandomX"
