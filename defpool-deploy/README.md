@@ -21,8 +21,6 @@ defpool-deploy/
 └── README.md            # This file
 ```
 
-**Note:** `docker-compose.yml` and `Makefile` are symlinked to the project root for convenience.
-
 ## Quick Start
 
 ### Development
@@ -35,7 +33,7 @@ cp defpool-deploy/config/.env.example .env
 vim .env
 
 # Start all services
-docker-compose up -d
+cd defpool-deploy && docker-compose up -d
 
 # View logs
 docker-compose logs -f
@@ -51,7 +49,7 @@ docker-compose down
 export DB_PASSWORD="your-secure-password"
 
 # Start services
-docker-compose -f docker-compose.yml up -d
+cd defpool-deploy && docker-compose up -d
 
 # Check health
 docker-compose ps
