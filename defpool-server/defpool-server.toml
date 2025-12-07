@@ -1,0 +1,4 @@
+listen_address = "0.0.0.0:3000"
+initial_target_address = "pool-sg.supportxmr.com:3333"
+# initial_target_pubkey = "..." # Not needed for SV1
+initial_target_protocol = "sv1"

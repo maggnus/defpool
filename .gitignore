@@ -1,0 +1,19 @@
+# Dependencies
+contrib
+
+# Rust build artifacts (if building at root)
+/target/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

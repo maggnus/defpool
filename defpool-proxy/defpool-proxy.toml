@@ -1,0 +1,2 @@
+server_endpoint = "http://localhost:3000"
+listen_address = "0.0.0.0:3333"
