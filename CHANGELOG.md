@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-12-07
+
+### Added
+- **Share Accounting System**
+  - PostgreSQL integration with SQLx
+  - Database models: Miner, Worker, Share, MinerStats
+  - Repository pattern for clean data access
+  - Accounting service for share tracking
+  - Automatic miner and worker creation
+  - Hashrate calculation (10-minute rolling window)
+  
+- **New API Endpoints**
+  - `POST /api/v1/shares` - Record share submissions (internal)
+  - `GET /api/v1/miners/{wallet}/stats` - Get miner statistics
+  - `GET /api/v1/miners/{wallet}/workers` - Get miner's workers
+  
+- **Database Infrastructure**
+  - PostgreSQL deployment via Docker Compose
+  - Database initialization script with schema
+  - Automatic triggers for stats updates
+  - Backup and restore scripts
+  
+- **Deployment Tools**
+  - `defpool-deploy/` directory for all deployment files
+  - `make db` - Start database
+  - `make backup` - Backup database
+  - `make restore` - Restore database
+
+### Changed
+- AppState now includes AccountingService
+- Configuration supports database_url with env override
+
+### Technical Details
+- **Database**: PostgreSQL 16 with connection pooling
+- **ORM**: SQLx with compile-time query checking
+- **Architecture**: Repository pattern with dependency injection
+- **Performance**: Indexed queries, automatic stats updates
+
+
 ## [0.3.0] - 2025-12-07
 
 ### Changed
