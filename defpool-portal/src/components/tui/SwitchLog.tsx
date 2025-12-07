@@ -24,22 +24,23 @@ const SwitchLog = () => {
             </tr>
           </thead>
           <tbody>
-            {logs.length > 0 ? (
-              logs.map((log, i) => (
-                <tr key={i}>
-                  <td className="text-muted-foreground">{log.time}</td>
-                  <td>{log.from}</td>
-                  <td className="tui-value-up">{log.to}</td>
-                  <td className="text-muted-foreground">{log.reason}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={4} className="text-center text-muted-foreground py-8">
-                  No switching activity yet
-                </td>
+            {logs.map((log, i) => (
+              <tr key={i}>
+                <td className="text-muted-foreground">{log.time}</td>
+                <td>{log.from}</td>
+                <td className="tui-value-up">{log.to}</td>
+                <td className="text-muted-foreground">{log.reason}</td>
               </tr>
-            )}
+            ))}
+            {/* Fill empty rows with zeros */}
+            {Array.from({ length: Math.max(0, 6 - logs.length) }, (_, i) => (
+              <tr key={`empty-${i}`}>
+                <td className="text-muted-foreground">--:--:--</td>
+                <td>-</td>
+                <td>-</td>
+                <td className="text-muted-foreground">-</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

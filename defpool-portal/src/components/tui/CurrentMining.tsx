@@ -32,8 +32,31 @@ const CurrentMining = () => {
     return (
       <div className="tui-window h-full">
         <div className="tui-title">[ CURRENT MINING ]</div>
-        <div className="tui-content flex items-center justify-center">
-          <span className="text-red-500">No mining target</span>
+        <div className="tui-content space-y-1">
+          <div className="tui-row">
+            <span className="tui-label">POOL</span>
+            <span className="tui-value">None</span>
+          </div>
+          <div className="tui-row">
+            <span className="tui-label">ADDRESS</span>
+            <span className="tui-value">-</span>
+          </div>
+          <div className="tui-row">
+            <span className="tui-label">PROTOCOL</span>
+            <span className="tui-value">-</span>
+          </div>
+          <div className="tui-row">
+            <span className="tui-label">STATUS</span>
+            <span className="tui-value">INACTIVE</span>
+          </div>
+          <div className="tui-row">
+            <span className="tui-label">UPTIME</span>
+            <span className="tui-value">0d 0h 0m</span>
+          </div>
+          <div className="tui-row">
+            <span className="tui-label">LAST UPDATE</span>
+            <span className="tui-value">Never</span>
+          </div>
         </div>
       </div>
     );

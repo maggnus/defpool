@@ -57,9 +57,32 @@ const ProfitabilityTable = () => {
   if (isLoading) {
     return (
       <div className="tui-window h-full">
-        <div className="tui-title">[ PROFITABILITY ]</div>
-        <div className="tui-content flex items-center justify-center">
-          <span className="text-muted-foreground">Loading...</span>
+        <div className="tui-title">[ PROFITABILITY SCORES ]</div>
+        <div className="tui-content">
+          <table className="tui-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>POOL</th>
+                <th>COIN</th>
+                <th>ALGO</th>
+                <th className="text-right">SCORE</th>
+                <th className="text-right">CHANGE</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 5 }, (_, i) => (
+                <tr key={i}>
+                  <td className="text-muted-foreground">{i + 1}</td>
+                  <td className="text-muted-foreground">Loading...</td>
+                  <td className="text-muted-foreground">-</td>
+                  <td className="text-muted-foreground">-</td>
+                  <td className="text-right">0.000000</td>
+                  <td className="text-right text-muted-foreground">0.00%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     );

@@ -29,9 +29,30 @@ const WorkersPanel = () => {
   if (isLoading) {
     return (
       <div className="tui-window h-full">
-        <div className="tui-title">[ WORKERS ]</div>
-        <div className="tui-content flex items-center justify-center">
-          <span className="text-muted-foreground">Loading workers...</span>
+        <div className="tui-title">[ WORKERS - 0/0 ONLINE ]</div>
+        <div className="tui-content">
+          <table className="tui-table">
+            <thead>
+              <tr>
+                <th>NAME</th>
+                <th className="text-right">MH/s</th>
+                <th className="text-right">SHARES</th>
+                <th className="text-right">LAST SEEN</th>
+                <th className="text-right">STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 5 }, (_, i) => (
+                <tr key={i}>
+                  <td className="text-muted-foreground">Loading...</td>
+                  <td className="text-right">0.00</td>
+                  <td className="text-right">0</td>
+                  <td className="text-right">-</td>
+                  <td className="text-right text-muted-foreground">OFFLINE</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     );
