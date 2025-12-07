@@ -1,4 +1,15 @@
 listen_address = "0.0.0.0:3000"
-initial_target_address = "pool-sg.supportxmr.com:3333"
-# initial_target_pubkey = "..." # Not needed for SV1
-initial_target_protocol = "sv1"
+profitability_check_interval_secs = 60
+switch_threshold_percent = 5.0
+
+[[pools]]
+name = "supportxmr"
+address = "pool-sg.supportxmr.com:3333"
+coin = "XMR"
+algorithm = "RandomX"
+
+[[pools]]
+name = "moneroocean"
+address = "gulf.moneroocean.stream:10128"
+coin = "XMR"
+algorithm = "RandomX"

@@ -1,14 +1,23 @@
 mod api;
-mod state;
 mod config;
+mod state;
+mod profitability;
+mod tasks;
 
-use axum::{routing::get, Router};
-use std::net::SocketAddr;
-use tokio::net::TcpListener;
-use tracing::info;
-use crate::state::AppState;
-use crate::config::Config;
+use axum::{
+    routing::get,
+    Router,
+};
 use clap::Parser;
+use tracing::info;
+use std::sync::Arc;
+
+use config::Config;
+use state::AppState;
+use profitability::ProfitabilityCalculator;
+use profitability::providers::CoinGeckoProvider;
+use profitability::providers::PoolApiProvider;
+use tasks::start_profitability_monitor;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -19,7 +28,6 @@ struct Args {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Initialize logging
     tracing_subscriber::fmt::init();
 
     let args = Args::parse();
@@ -28,22 +36,34 @@ async fn main() -> anyhow::Result<()> {
     info!("Config loaded: {:?}", config);
 
     let listen_address = config.listen_address;
-    let state = AppState::new(config);
+    let state = AppState::new(config.clone());
+
+    // Initialize profitability calculator with real providers
+    info!("Initializing CoinGecko price provider");
+    let price_provider = Arc::new(CoinGeckoProvider::new());
+    
+    info!("Initializing pool API difficulty provider");
+    let difficulty_provider = Arc::new(PoolApiProvider::new());
+    
+    let calculator = Arc::new(ProfitabilityCalculator::new(
+        price_provider,
+        difficulty_provider,
+        config.pools.clone(),
+    ));
+
+    // Start background profitability monitor
+    start_profitability_monitor(state.clone(), calculator, config);
+
+    // Build API routes
     let app = Router::new()
         .route("/target", get(api::get_target))
-        .with_state(state.clone());
-
-    // Spawn background profitability task (mocked)
-    tokio::spawn(async move {
-        loop {
-            tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
-            info!("Calculating profitability... (Mock: Keeping current target)");
-            // Logic to update state.current_target would go here
-        }
-    });
+        .route("/pools", get(api::get_pools))
+        .route("/current-pool", get(api::get_current_pool))
+        .with_state(state);
 
     info!("DefPool Server listening on {}", listen_address);
-    let listener = TcpListener::bind(listen_address).await?;
+    let listener = tokio::net::TcpListener::bind(listen_address).await?;
     axum::serve(listener, app).await?;
+
     Ok(())
 }
