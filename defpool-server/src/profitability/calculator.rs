@@ -61,19 +61,29 @@ where
         let price_btc = self.price_provider.get_price_btc(&target.coin).await?;
         let difficulty = self.difficulty_provider.get_difficulty(&target.coin).await?;
         
-        // Hardcoded block reward for now (should be configurable per coin)
+        // Block rewards for different coins (should be configurable/dynamic in production)
         let block_reward = match target.coin.as_str() {
-            "XMR" => 0.6, // Approximate XMR block reward
-            _ => 1.0,
+            "XMR" => 0.6,     // Monero block reward
+            "LTC" => 12.5,    // Litecoin block reward
+            "DOGE" => 10000.0, // Dogecoin block reward (high but low value)
+            _ => 1.0,         // Default fallback
+        };
+
+        // Block times for different coins (seconds)
+        let block_time_seconds = match target.coin.as_str() {
+            "XMR" => 120.0,  // Monero: ~2 minutes
+            "LTC" => 150.0,  // Litecoin: ~2.5 minutes
+            "DOGE" => 60.0,  // Dogecoin: ~1 minute
+            _ => 600.0,      // Default: 10 minutes
         };
 
         // Calculate profitability score: Expected daily earnings per hash unit
         // Formula: (Block Reward × Price × Seconds Per Day) / (Difficulty × Block Time)
-        let block_time_seconds = match target.coin.as_str() {
-            "XMR" => 120.0, // Monero block time ~2 minutes
-            _ => 600.0,     // Default 10 minutes for other coins
-        };
-
+        //
+        // Note: This provides basic cross-coin profitability comparison.
+        // Production systems may need algorithm-specific calculations:
+        // - RandomX (XMR): Memory-hard CPU mining
+        // - Scrypt (LTC, DOGE): Memory-hard with different parameters
         let score = (block_reward * price_btc * 86400.0) / (difficulty * block_time_seconds);
 
         Ok(ProfitabilityScore::new(

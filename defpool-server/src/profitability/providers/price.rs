@@ -21,10 +21,15 @@ impl CoinGeckoProvider {
     pub fn new() -> Self {
         let mut coin_id_map = HashMap::new();
         // Map coin symbols to CoinGecko IDs
+        // RandomX coins
         coin_id_map.insert("XMR".to_string(), "monero".to_string());
+        // Scrypt coins
+        coin_id_map.insert("LTC".to_string(), "litecoin".to_string());
+        coin_id_map.insert("DOGE".to_string(), "dogecoin".to_string());
+        coin_id_map.insert("FTC".to_string(), "feathercoin".to_string());
+        // Other coins
         coin_id_map.insert("BTC".to_string(), "bitcoin".to_string());
         coin_id_map.insert("ETH".to_string(), "ethereum".to_string());
-        coin_id_map.insert("LTC".to_string(), "litecoin".to_string());
 
         Self {
             client: reqwest::Client::new(),

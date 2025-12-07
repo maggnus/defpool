@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SV2 Connection Handling**: Added Noise-encrypted SV2 connection establishment between proxy and upstream pools
 - **Bidirectional Message Forwarding**: Established async message forwarding between SV1 miners and SV2 pools
 - **Error Handling Infrastructure**: Added proper error types and handling for network operations
+- **Scrypt Coin Support**: Added support for Scrypt-based coins (Litecoin, Dogecoin) with proper difficulty APIs and block reward calculations
 
 ## [0.4.0] - 2025-12-07
 

@@ -16,3 +16,18 @@ type = "pool"
 address = "gulf.moneroocean.stream:10128"
 coin = "XMR"
 algorithm = "RandomX"
+
+# Scrypt coin examples (addresses may need updating)
+[[targets]]
+name = "litecoinpool"
+type = "pool"
+address = "us-east.stratum.slushpool.com:3333"
+coin = "LTC"
+algorithm = "Scrypt"
+
+[[targets]]
+name = "dogecoinpool"
+type = "pool"
+address = "stratum.dogeminingpool.com:3333"
+coin = "DOGE"
+algorithm = "Scrypt"

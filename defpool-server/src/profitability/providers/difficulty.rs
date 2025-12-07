@@ -25,7 +25,7 @@ impl PoolApiProvider {
     async fn fetch_xmr_difficulty(&self) -> Result<f64> {
         // MoneroBlocks.info API
         let url = "https://moneroblocks.info/api/get_stats";
-        
+
         debug!("Fetching XMR difficulty from MoneroBlocks");
 
         let response = self.client
@@ -41,10 +41,68 @@ impl PoolApiProvider {
         }
 
         let data: MoneroBlocksResponse = response.json().await?;
-        
+
         let difficulty = data.difficulty as f64;
         debug!("XMR network difficulty: {}", difficulty);
         Ok(difficulty)
+    }
+
+    async fn fetch_ltc_difficulty(&self) -> Result<f64> {
+        // BlockCypher API for Litecoin
+        let url = "https://api.blockcypher.com/v1/ltc/main";
+
+        debug!("Fetching LTC difficulty from BlockCypher");
+
+        let response = self.client
+            .get(url)
+            .header("User-Agent", "DefPool/1.0")
+            .timeout(std::time::Duration::from_secs(10))
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            warn!("BlockCypher API returned status: {}", response.status());
+            anyhow::bail!("BlockCypher API error: {}", response.status());
+        }
+
+        #[derive(serde::Deserialize)]
+        struct BlockCypherResponse {
+            difficulty: f64,
+        }
+
+        let data: BlockCypherResponse = response.json().await?;
+
+        debug!("LTC network difficulty: {}", data.difficulty);
+        Ok(data.difficulty)
+    }
+
+    async fn fetch_doge_difficulty(&self) -> Result<f64> {
+        // DogeChain API for Dogecoin
+        let url = "https://dogechain.info/api/v1/stats";
+
+        debug!("Fetching DOGE difficulty from DogeChain");
+
+        let response = self.client
+            .get(url)
+            .header("User-Agent", "DefPool/1.0")
+            .timeout(std::time::Duration::from_secs(10))
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            warn!("DogeChain API returned status: {}", response.status());
+            anyhow::bail!("DogeChain API error: {}", response.status());
+        }
+
+        #[derive(serde::Deserialize)]
+        struct DogeChainResponse {
+            difficulty: f64,
+        }
+
+        let data: DogeChainResponse = response.json().await?;
+
+        debug!("DOGE network difficulty: {}", data.difficulty);
+        Ok(data.difficulty)
     }
 }
 
@@ -64,6 +122,8 @@ impl DifficultyProvider for PoolApiProvider {
     async fn get_difficulty(&self, coin: &str) -> Result<f64> {
         match coin {
             "XMR" => self.fetch_xmr_difficulty().await,
+            "LTC" => self.fetch_ltc_difficulty().await,
+            "DOGE" => self.fetch_doge_difficulty().await,
             _ => {
                 warn!("No difficulty provider for coin: {}, using default", coin);
                 Ok(100_000.0) // Fallback
