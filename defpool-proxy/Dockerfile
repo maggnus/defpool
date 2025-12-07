@@ -2,17 +2,21 @@ FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
 WORKDIR /app
 
 FROM chef AS planner
-COPY . .
+COPY defpool-proxy defpool-proxy
+COPY contrib contrib
+WORKDIR /app/defpool-proxy
 RUN cargo chef prepare --recipe-path recipe.json
 
-FROM chef AS builder 
-COPY --from=planner /app/recipe.json recipe.json
+FROM chef AS builder
+# Copy contrib FIRST (needed for dependencies)
+COPY contrib /app/contrib
+COPY --from=planner /app/defpool-proxy/recipe.json recipe.json
 
 # Build dependencies
 RUN cargo chef cook --release --recipe-path recipe.json
 
 # Build application
-COPY . .
+COPY defpool-proxy .
 RUN cargo build --release
 
 # Runtime stage
