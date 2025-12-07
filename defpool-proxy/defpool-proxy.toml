@@ -1,2 +1,4 @@
 server_endpoint = "http://localhost:3000"
 listen_address = "0.0.0.0:3333"
+# Default wallet for SV1 login (should be replaced with proper miner authentication)
+default_wallet = "44AFFq5kSiGBoZ4NMDwYtN18obc8AemS33DBDDws8keQf66JxvVXuquhE3mAyUAL4f8cpAGzBVCTLG0P5sqDK17I3wcBiRT"

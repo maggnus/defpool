@@ -5,6 +5,7 @@ use std::net::SocketAddr;
 pub struct Config {
     pub server_endpoint: String,
     pub listen_address: SocketAddr,
+    pub default_wallet: Option<String>,
 }
 
 impl Config {

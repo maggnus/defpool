@@ -67,8 +67,14 @@ where
             _ => 1.0,
         };
 
-        // Calculate profitability: (Block Reward * Price) / Difficulty
-        let score = (block_reward * price_btc) / difficulty;
+        // Calculate profitability score: Expected daily earnings per hash unit
+        // Formula: (Block Reward × Price × Seconds Per Day) / (Difficulty × Block Time)
+        let block_time_seconds = match target.coin.as_str() {
+            "XMR" => 120.0, // Monero block time ~2 minutes
+            _ => 600.0,     // Default 10 minutes for other coins
+        };
+
+        let score = (block_reward * price_btc * 86400.0) / (difficulty * block_time_seconds);
 
         Ok(ProfitabilityScore::new(
             target.name.clone(),
