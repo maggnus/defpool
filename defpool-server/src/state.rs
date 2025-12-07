@@ -3,6 +3,7 @@ use std::sync::{Arc, RwLock};
 use std::time::Instant;
 use crate::config::{Config, MiningTarget};
 use crate::profitability::ProfitabilityScore;
+use crate::accounting::AccountingService;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Target {
@@ -17,10 +18,11 @@ pub struct AppState {
     pub last_switch_time: Arc<RwLock<Instant>>,
     pub profitability_scores: Arc<RwLock<Vec<ProfitabilityScore>>>,
     pub targets: Vec<MiningTarget>,
+    pub accounting_service: Arc<AccountingService>,
 }
 
 impl AppState {
-    pub fn new(config: Config) -> Self {
+    pub fn new(config: Config, accounting_service: Arc<AccountingService>) -> Self {
         let initial_target = config.targets.first()
             .expect("At least one mining target must be configured")
             .name.clone();
@@ -30,6 +32,7 @@ impl AppState {
             last_switch_time: Arc::new(RwLock::new(Instant::now())),
             profitability_scores: Arc::new(RwLock::new(Vec::new())),
             targets: config.targets,
+            accounting_service,
         }
     }
 

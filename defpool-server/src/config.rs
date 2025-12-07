@@ -25,6 +25,7 @@ pub struct MiningTarget {
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
     pub listen_address: SocketAddr,
+    pub database_url: String,
     pub targets: Vec<MiningTarget>,
     pub profitability_check_interval_secs: u64,
     pub switch_threshold_percent: f64,
@@ -33,7 +34,12 @@ pub struct Config {
 impl Config {
     pub fn load(path: &str) -> anyhow::Result<Self> {
         let content = std::fs::read_to_string(path)?;
-        let config: Config = toml::from_str(&content)?;
+        let mut config: Config = toml::from_str(&content)?;
+        
+        // Override database_url from environment if set
+        if let Ok(db_url) = std::env::var("DATABASE_URL") {
+            config.database_url = db_url;
+        }
         
         // Validate targets
         if config.targets.is_empty() {
