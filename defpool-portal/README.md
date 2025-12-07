@@ -32,8 +32,36 @@ cd <YOUR_PROJECT_NAME>
 # Step 3: Install the necessary dependencies.
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Step 4: Configure environment variables (optional)
+cp env.example .env
+# Edit .env to configure API endpoints and demo wallet
+
+# Step 5: Start the development server with auto-reloading and an instant preview.
 npm run dev
+```
+
+## Connecting to DefPool Server
+
+The portal connects to the DefPool server API for real-time data. Make sure the DefPool server is running on `http://localhost:3000` or configure a different URL:
+
+```env
+VITE_API_BASE_URL=http://localhost:3000
+```
+
+### API Endpoints Used
+
+- `GET /api/v1/targets` - Profitability scores for all mining targets
+- `GET /api/v1/target` - Current mining target
+- `GET /api/v1/targets/current` - Current target name
+- `GET /api/v1/miners/{wallet}/workers` - Worker statistics
+- `GET /api/v1/miners/{wallet}/stats` - Miner statistics
+
+### Demo Wallet
+
+For testing, a demo wallet is configured. In production, implement proper wallet selection:
+
+```env
+VITE_DEMO_WALLET=44AFFq5kSiGBoZ4NMDwYtN18obc8AemS33DBDDws8keQf66JxvVXuquhE3mAyUAL4f8cpAGzBVCTLG0P5sqDK17I3wcBiRT
 ```
 
 **Edit a file directly in GitHub**

@@ -1,4 +1,6 @@
 const EarningsPanel = () => {
+  // TODO: Connect to real earnings API when implemented on server
+  // For now, showing placeholder data
   return (
     <div className="tui-window h-full">
       <div className="tui-title">[ EARNINGS ]</div>
@@ -27,6 +29,10 @@ const EarningsPanel = () => {
         <div className="tui-row">
           <span className="tui-label">TOTAL PAID</span>
           <span className="tui-value">2.4721 BTC</span>
+        </div>
+        <div className="border-t border-border my-2" />
+        <div className="text-center text-muted-foreground text-xs py-1">
+          Real earnings data coming soon
         </div>
       </div>
     </div>

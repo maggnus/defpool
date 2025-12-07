@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { useTargets, useCurrentTargetName, ProfitabilityScore } from "@/hooks/use-defpool-api";
 
 interface CoinData {
   coin: string;
@@ -6,64 +7,112 @@ interface CoinData {
   profit: number;
   change: number;
   active: boolean;
+  target_name: string;
 }
 
-const initialCoins: CoinData[] = [
-  { coin: "KAS", algo: "kHeavyHash", profit: 2.47, change: 5.2, active: true },
-  { coin: "RVN", algo: "KawPow", profit: 2.31, change: -1.4, active: false },
-  { coin: "ERG", algo: "Autolykos", profit: 2.18, change: 3.1, active: false },
-  { coin: "FLUX", algo: "ZelHash", profit: 1.94, change: 0.8, active: false },
-  { coin: "ETC", algo: "Etchash", profit: 1.87, change: -0.3, active: false },
-  { coin: "NEXA", algo: "NexaPow", profit: 1.76, change: 2.4, active: false },
-  { coin: "CLORE", algo: "KawPow", profit: 1.65, change: -2.1, active: false },
-  { coin: "NEOX", algo: "KawPow", profit: 1.52, change: 1.2, active: false },
-];
+// Algorithm mapping for display
+const getAlgorithmDisplay = (coin: string): string => {
+  switch (coin) {
+    case "XMR":
+      return "RandomX";
+    case "LTC":
+    case "DOGE":
+      return "Scrypt";
+    default:
+      return "Unknown";
+  }
+};
 
 const ProfitabilityTable = () => {
-  const [coins, setCoins] = useState(initialCoins);
+  const { data: targets, isLoading, error } = useTargets();
+  const { data: currentTarget } = useCurrentTargetName();
+  const [previousScores, setPreviousScores] = useState<Map<string, number>>(new Map());
 
+  // Convert API data to component format
+  const coins: CoinData[] = targets?.map((target: ProfitabilityScore) => {
+    const previousScore = previousScores.get(target.target_name) || target.score;
+    const change = previousScore > 0 ? ((target.score - previousScore) / previousScore) * 100 : 0;
+
+    return {
+      coin: target.coin,
+      algo: getAlgorithmDisplay(target.coin),
+      profit: target.score,
+      change,
+      active: target.target_name === currentTarget,
+      target_name: target.target_name,
+    };
+  }).sort((a, b) => b.profit - a.profit) || [];
+
+  // Update previous scores for change calculation
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCoins(prev => prev.map(coin => ({
-        ...coin,
-        profit: Math.max(0.5, coin.profit + (Math.random() - 0.5) * 0.1),
-        change: coin.change + (Math.random() - 0.5) * 0.5,
-      })).sort((a, b) => b.profit - a.profit).map((c, i) => ({
-        ...c,
-        active: i === 0
-      })));
-    }, 3000);
-    return () => clearInterval(timer);
-  }, []);
+    if (targets) {
+      const newPreviousScores = new Map();
+      targets.forEach((target: ProfitabilityScore) => {
+        newPreviousScores.set(target.target_name, target.score);
+      });
+      setPreviousScores(newPreviousScores);
+    }
+  }, [targets]);
+
+  if (isLoading) {
+    return (
+      <div className="tui-window h-full">
+        <div className="tui-title">[ PROFITABILITY ]</div>
+        <div className="tui-content flex items-center justify-center">
+          <span className="text-muted-foreground">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="tui-window h-full">
+        <div className="tui-title">[ PROFITABILITY ]</div>
+        <div className="tui-content flex items-center justify-center">
+          <span className="text-red-500">Error loading data</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="tui-window h-full">
-      <div className="tui-title">[ PROFITABILITY - $/DAY/100MH ]</div>
+      <div className="tui-title">[ PROFITABILITY SCORES ]</div>
       <div className="tui-content">
         <table className="tui-table">
           <thead>
             <tr>
               <th>#</th>
+              <th>POOL</th>
               <th>COIN</th>
               <th>ALGO</th>
-              <th className="text-right">$/DAY</th>
-              <th className="text-right">24H</th>
+              <th className="text-right">SCORE</th>
+              <th className="text-right">CHANGE</th>
             </tr>
           </thead>
           <tbody>
             {coins.map((coin, i) => (
-              <tr key={coin.coin} className={coin.active ? "bg-secondary" : ""}>
+              <tr key={coin.target_name} className={coin.active ? "bg-secondary" : ""}>
                 <td className="text-muted-foreground">{i + 1}</td>
                 <td className={coin.active ? "text-foreground" : "text-muted-foreground"}>
-                  {coin.active && "► "}{coin.coin}
+                  {coin.active && "► "}{coin.target_name}
                 </td>
+                <td className="text-muted-foreground">{coin.coin}</td>
                 <td className="text-muted-foreground">{coin.algo}</td>
-                <td className="text-right">${coin.profit.toFixed(2)}</td>
+                <td className="text-right">{coin.profit.toFixed(6)}</td>
                 <td className={`text-right ${coin.change >= 0 ? "tui-value-up" : "tui-value-down"}`}>
-                  {coin.change >= 0 ? "+" : ""}{coin.change.toFixed(1)}%
+                  {coin.change >= 0 ? "+" : ""}{coin.change.toFixed(2)}%
                 </td>
               </tr>
             ))}
+            {coins.length === 0 && (
+              <tr>
+                <td colSpan={6} className="text-center text-muted-foreground py-4">
+                  No mining targets available
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

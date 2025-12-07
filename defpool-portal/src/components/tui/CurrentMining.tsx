@@ -1,50 +1,71 @@
-import { useEffect, useState } from "react";
+import { useCurrentTarget, useCurrentTargetName } from "@/hooks/use-defpool-api";
 
 const CurrentMining = () => {
-  const [hashrate, setHashrate] = useState(847.32);
-  const [accepted, setAccepted] = useState(12847);
-  const [rejected, setRejected] = useState(23);
+  const { data: currentTarget, isLoading: targetLoading } = useCurrentTarget();
+  const { data: currentTargetName } = useCurrentTargetName();
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setHashrate(prev => prev + (Math.random() - 0.5) * 5);
-      if (Math.random() > 0.7) setAccepted(prev => prev + 1);
-      if (Math.random() > 0.98) setRejected(prev => prev + 1);
-    }, 2000);
-    return () => clearInterval(timer);
-  }, []);
+  // Helper function to get algorithm display name
+  const getAlgorithmDisplay = (coin: string): string => {
+    switch (coin) {
+      case "XMR":
+        return "RandomX";
+      case "LTC":
+      case "DOGE":
+        return "Scrypt";
+      default:
+        return "Unknown";
+    }
+  };
+
+  if (targetLoading) {
+    return (
+      <div className="tui-window h-full">
+        <div className="tui-title">[ CURRENT MINING ]</div>
+        <div className="tui-content flex items-center justify-center">
+          <span className="text-muted-foreground">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentTarget) {
+    return (
+      <div className="tui-window h-full">
+        <div className="tui-title">[ CURRENT MINING ]</div>
+        <div className="tui-content flex items-center justify-center">
+          <span className="text-red-500">No mining target</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="tui-window h-full">
       <div className="tui-title">[ CURRENT MINING ]</div>
       <div className="tui-content space-y-1">
         <div className="tui-row">
-          <span className="tui-label">COIN</span>
-          <span className="tui-value">KASPA (KAS)</span>
+          <span className="tui-label">POOL</span>
+          <span className="tui-value">{currentTargetName || "Unknown"}</span>
         </div>
         <div className="tui-row">
-          <span className="tui-label">ALGO</span>
-          <span className="tui-value">kHeavyHash</span>
+          <span className="tui-label">ADDRESS</span>
+          <span className="tui-value">{currentTarget.address}</span>
         </div>
         <div className="tui-row">
-          <span className="tui-label">HASHRATE</span>
-          <span className="tui-value">{hashrate.toFixed(2)} MH/s</span>
+          <span className="tui-label">PROTOCOL</span>
+          <span className="tui-value">{currentTarget.protocol.toUpperCase()}</span>
         </div>
         <div className="tui-row">
-          <span className="tui-label">ACCEPTED</span>
-          <span className="tui-value-up">{accepted.toLocaleString()}</span>
-        </div>
-        <div className="tui-row">
-          <span className="tui-label">REJECTED</span>
-          <span className="tui-value-down">{rejected}</span>
+          <span className="tui-label">STATUS</span>
+          <span className="tui-value-up">ACTIVE</span>
         </div>
         <div className="tui-row">
           <span className="tui-label">UPTIME</span>
-          <span className="tui-value">3d 14h 27m</span>
+          <span className="tui-value">System Online</span>
         </div>
         <div className="tui-row">
-          <span className="tui-label">EFFICIENCY</span>
-          <span className="tui-value-up">99.82%</span>
+          <span className="tui-label">LAST UPDATE</span>
+          <span className="tui-value">{new Date().toLocaleTimeString()}</span>
         </div>
       </div>
     </div>
