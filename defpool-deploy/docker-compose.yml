@@ -25,7 +25,7 @@ services:
   # DefPool Server
   defpool-server:
     build:
-      context: ./defpool-server
+      context: ../defpool-server
       dockerfile: Dockerfile
     container_name: defpool-server
     restart: unless-stopped
@@ -36,7 +36,7 @@ services:
       RUST_LOG: info
       DATABASE_URL: postgres://defpool:${DB_PASSWORD:-defpool_dev_password}@postgres:5432/defpool
     volumes:
-      - ./defpool-server/defpool-server.toml:/app/defpool-server.toml:ro
+      - ../defpool-server/defpool-server.toml:/app/defpool-server.toml:ro
     ports:
       - "3000:3000"
     networks:
@@ -45,7 +45,7 @@ services:
   # DefPool Proxy
   defpool-proxy:
     build:
-      context: ./defpool-proxy
+      context: ../defpool-proxy
       dockerfile: Dockerfile
     container_name: defpool-proxy
     restart: unless-stopped
@@ -55,7 +55,7 @@ services:
       RUST_LOG: info
       DEFPOOL_SERVER_ENDPOINT: http://defpool-server:3000
     volumes:
-      - ./defpool-proxy/defpool-proxy.toml:/app/defpool-proxy.toml:ro
+      - ../defpool-proxy/defpool-proxy.toml:/app/defpool-proxy.toml:ro
     ports:
       - "3333:3333"
     networks:
