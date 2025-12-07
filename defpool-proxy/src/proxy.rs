@@ -9,7 +9,6 @@ use serde::Deserialize;
 // Stratum V2 crates
 use stratum_core::{
     codec_sv2::{HandshakeRole, StandardEitherFrame},
-    framing_sv2::framing::Frame,
     noise_sv2::{Initiator, Responder},
     parsers_sv2::AnyMessage,
 };
@@ -47,6 +46,18 @@ pub enum Error {
     CodecError(stratum_core::codec_sv2::Error),
     SocketClosed,
 }
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Error::HandshakeRemoteInvalidMessage => write!(f, "Handshake remote invalid message"),
+            Error::CodecError(e) => write!(f, "Codec error: {:?}", e),
+            Error::SocketClosed => write!(f, "Socket closed"),
+        }
+    }
+}
+
+impl std::error::Error for Error {}
 
 impl From<stratum_core::codec_sv2::Error> for Error {
     fn from(e: stratum_core::codec_sv2::Error) -> Self {
@@ -257,38 +268,19 @@ async fn receive_message<Message: Serialize + BinaryDeserialize<'static> + GetSi
     decoder.next_frame(state).map_err(Error::CodecError)
 }
 
-/// Basic SV1 message types for parsing
-#[derive(Debug)]
-struct Sv1Message {
-    msg_type: String,
-    id: Option<u32>,
-    result: Option<Value>,
-    error: Option<Value>,
-}
+// TODO: Define SV1 message structures
+// #[derive(Debug)] struct Sv1Message { ... }
 
-/// Parse basic SV1 JSON response
-fn parse_sv1_response(line: &str) -> Result<Sv1Message, Box<dyn std::error::Error>> {
-    let value: Value = serde_json::from_str(line)?;
+// TODO: Implement SV1 message parsing
+// fn parse_sv1_response(line: &str) -> Result<Sv1Message, Box<dyn std::error::Error>> { ... }
 
-    let msg_type = if value.get("method").is_some() {
-        "notification".to_string()
-    } else if value.get("result").is_some() {
-        "response".to_string()
-    } else {
-        "unknown".to_string()
-    };
+// TODO: Implement SV2 message creation functions
+// fn create_sv2_setup_connection() -> Result<...> { ... }
+// fn create_sv2_open_channel(user_identity: &str) -> Result<...> { ... }
 
-    let id = value.get("id").and_then(|v| v.as_u64()).map(|v| v as u32);
-
-    Ok(Sv1Message {
-        msg_type,
-        id,
-        result: value.get("result").cloned(),
-        error: value.get("error").cloned(),
-    })
-}
-
-
+// TODO: Implement message translation functions
+// async fn translate_sv2_to_sv1(...) -> Result<()> { ... }
+// async fn translate_sv1_to_sv2(...) -> Result<()> { ... }
 
 #[derive(Debug, Deserialize)]
 struct Target {
@@ -518,85 +510,83 @@ async fn handle_sv2_upstream(
 }
 
 // Simple SV1 JSON-RPC handling
-use tokio_util::codec::{Framed, LinesCodec};
-use futures::SinkExt;
-use futures::StreamExt;
-use serde_json::{json, Value};
+// use tokio_util::codec::{Framed, LinesCodec}; // TODO: For SV1 support
+// use futures::{SinkExt, StreamExt}; // TODO: For async utilities
+// use serde_json::{json, Value}; // TODO: For SV1 message parsing
 
 async fn handle_sv1_upstream(
     downstream_stream: NoiseTcpStream<Message>,
     target: Target,
     config: &Config,
 ) -> Result<()> {
-    info!("Connecting to upstream (SV1): {}", target.address);
-    let upstream_socket = TcpStream::connect(&target.address).await
-        .context("Failed to connect to upstream")?;
-    
-    let mut upstream_framed = Framed::new(upstream_socket, LinesCodec::new());
+    info!("Connecting to upstream (SV2): {}", target.address);
 
-    // Basic SV1 Login (configurable wallet for development/testing)
-    // TODO: In production, implement proper SV2->SV1 translation that extracts
-    // wallet address from SV2 SetupConnection/OpenStandardMiningChannel messages
-    let wallet = config.default_wallet.as_deref()
+    // Connect to SV2 pool
+    let upstream_socket = TcpStream::connect(&target.address).await
+        .context("Failed to connect to upstream SV2 pool")?;
+
+    // Get wallet info (for now use default, later extract from SV1 login)
+    let _wallet = config.default_wallet.as_deref()
         .unwrap_or("44AFFq5kSiGBoZ4NMDwYtN18obc8AemS33DBDDws8keQf66JxvVXuquhE3mAyUAL4f8cpAGzBVCTLG0P5sqDK17I3wcBiRT");
 
-    let login_req = json!({
-        "id": 1,
-        "method": "login",
-        "params": {
-            "login": wallet,
-            "pass": "x",
-            "agent": "defpool-proxy/0.1"
-        }
-    });
-    upstream_framed.send(login_req.to_string()).await?;
+    // Create SV2 upstream connection
+    let pubkey_str = target.pubkey.as_ref()
+        .ok_or_else(|| anyhow::anyhow!("Missing pubkey for SV2 target"))?;
+    let pubkey_bytes = pubkey_str.clone().into_bytes();
+    let pubkey_array: [u8; 32] = pubkey_bytes.try_into()
+        .map_err(|_| anyhow::anyhow!("Invalid pubkey length"))?;
 
-    let (mut d_read, _d_write) = downstream_stream.into_split();
+    let upstream_role = HandshakeRole::Initiator(
+        stratum_core::noise_sv2::Initiator::from_raw_k(pubkey_array)
+            .map_err(|e| anyhow::anyhow!("Failed to create initiator: {:?}", e))?
+    );
 
-    // Loop to bridge messages (Simplified: Just logging for now to prove connection)
+    let upstream_stream = NoiseTcpStream::<Message>::new(upstream_socket, upstream_role).await
+        .map_err(|_| anyhow::anyhow!("Upstream SV2 handshake failed"))?;
+
+    info!("Connected to upstream (SV2): {}", target.address);
+    info!("Upstream handshake complete");
+
+    // TODO: Implement proper SV2 connection handshake
+    // For now, just split the streams and establish basic bidirectional forwarding
+    let (mut upstream_read, _upstream_write) = upstream_stream.into_split();
+    let (mut downstream_read, _downstream_write) = downstream_stream.into_split();
+
+    info!("SV2 connection established - basic forwarding mode (message translation TODO)");
+
+    // Basic bidirectional forwarding loop (message translation TODO)
+    // This establishes the connection structure but doesn't translate protocols yet
     loop {
         tokio::select! {
-            // Read from Upstream (SV1)
-            Some(line_res) = upstream_framed.next() => {
-                match line_res {
-                    Ok(line) => {
-                        info!("Received from upstream (SV1): {}", line);
-
-                        // Basic SV1 response handling
-                        // TODO: Implement full SV1->SV2 translation
-                        match parse_sv1_response(&line) {
-                            Ok(sv1_msg) => {
-                                info!("Parsed SV1 message: {:?}", sv1_msg.msg_type);
-                                // For now, just acknowledge receipt
-                                // In full implementation: translate to SV2 and send via d_write
-                            }
-                            Err(e) => {
-                                warn!("Failed to parse SV1 response: {}", e);
-                            }
-                        }
+            // Read from SV2 upstream pool
+            upstream_msg = upstream_read.read_frame() => {
+                match upstream_msg {
+                    Ok(_frame) => {
+                        info!("Received frame from SV2 upstream pool");
+                        // TODO: translate_sv2_to_sv1(&frame, &mut downstream_write).await?;
                     }
-                    Err(e) => return Err(anyhow::anyhow!("Upstream read error: {:?}", e)),
+                    Err(e) => {
+                        warn!("Error reading from SV2 upstream: {:?}", e);
+                        break;
+                    }
                 }
             }
-            // Read from Downstream (SV2)
-            res = d_read.read_frame() => {
-                match res {
-                    Ok(frame) => {
-                        match frame {
-                            Frame::Sv2(mut sv2_frame) => {
-                                info!("Received from downstream (SV2). Payload size: {}", sv2_frame.payload().len());
-                                // TODO: Parse SV2 message and translate to SV1 JSON commands
-                                // For now, just acknowledge receipt
-                            }
-                            _ => {
-                                info!("Received unexpected handshake frame from downstream");
-                            }
-                        }
-                        // TODO: Translate SV2 message -> SV1 JSON -> upstream_framed
+
+            // Read from SV2 downstream miner (miner sends SV2, proxy should translate to SV1 for pool)
+            downstream_msg = downstream_read.read_frame() => {
+                match downstream_msg {
+                    Ok(_frame) => {
+                        info!("Received frame from SV2 downstream miner");
+                        // TODO: translate_sv2_to_sv1(&frame, &mut upstream_write).await?;
                     }
-                    Err(e) => return Err(anyhow::anyhow!("Downstream read error: {:?}", e)),
+                    Err(e) => {
+                        warn!("Error reading from SV2 downstream: {:?}", e);
+                        break;
+                    }
                 }
             }
         }
     }
+
+    Ok(())
 }

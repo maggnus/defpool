@@ -11,7 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Proxy Bidirectional Communication Bug**: Fixed `handle_sv1_upstream` discarding the downstream write handle, preventing SV2 responses from being sent back to miners
 - **Profitability Formula**: Corrected mining profitability calculation to include block time factor: `(Block Reward × Price × 86400) / (Difficulty × Block Time)`
 - **Hardcoded Wallet Security**: Removed hardcoded wallet address from proxy, made configurable via `default_wallet` config option
-- **Protocol Translation Framework**: Added basic SV1→SV2 and SV2→SV1 message parsing framework with proper error handling
+
+### Added
+- **SV1→SV2 Protocol Translation Framework**: Implemented basic proxy structure for translating between Stratum V1 and V2 protocols
+- **SV2 Connection Handling**: Added Noise-encrypted SV2 connection establishment between proxy and upstream pools
+- **Bidirectional Message Forwarding**: Established async message forwarding between SV1 miners and SV2 pools
+- **Error Handling Infrastructure**: Added proper error types and handling for network operations
 
 ## [0.4.0] - 2025-12-07
 
