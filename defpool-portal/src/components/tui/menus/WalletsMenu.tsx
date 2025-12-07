@@ -14,11 +14,7 @@ interface WalletsMenuProps {
 }
 
 const WalletsMenu = ({ isOpen, onClose }: WalletsMenuProps) => {
-  const [wallets, setWallets] = useState<Wallet[]>([
-    { coin: "BTC", address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" },
-    { coin: "ETH", address: "0x742d35Cc6634C0532925a3b844Bc9e7595f..." },
-    { coin: "KAS", address: "kaspa:qz0c..." },
-  ]);
+  const [wallets, setWallets] = useState<Wallet[]>([]);
   const [newCoin, setNewCoin] = useState("");
   const [newAddress, setNewAddress] = useState("");
 

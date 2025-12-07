@@ -11,12 +11,12 @@ interface SettingsMenuProps {
 }
 
 const SettingsMenu = ({ isOpen, onClose }: SettingsMenuProps) => {
-  const [poolUrl, setPoolUrl] = useState("stratum+tcp://pool.automine.io:3333");
-  const [workerName, setWorkerName] = useState("worker1");
+  const [poolUrl, setPoolUrl] = useState("");
+  const [workerName, setWorkerName] = useState("");
   const [intensity, setIntensity] = useState("high");
   const [autoSwitch, setAutoSwitch] = useState(true);
-  const [notifications, setNotifications] = useState(true);
-  const [tempLimit, setTempLimit] = useState("85");
+  const [notifications, setNotifications] = useState(false);
+  const [tempLimit, setTempLimit] = useState("75");
 
   return (
     <TuiModal title="SETTINGS" isOpen={isOpen} onClose={onClose} width="max-w-xl">

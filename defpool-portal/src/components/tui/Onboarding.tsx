@@ -77,13 +77,13 @@ const Onboarding = ({ onComplete, onSkip }: OnboardingProps) => {
           <div className="text-foreground text-2xl py-4">[OK]</div>
           <div className="text-foreground">Your account is ready!</div>
           <div className="text-muted-foreground text-xs space-y-2">
-            <p>Username: {username || "miner1"}</p>
+            <p>Username: {username || "Not set"}</p>
             <p>Wallet: {btcAddress ? `${btcAddress.slice(0, 10)}...` : "Not set"}</p>
           </div>
           <div className="text-muted-foreground text-xs pt-4">
-            <p>Connect your miners using:</p>
+            <p>Configure your mining pool in Settings</p>
             <p className="text-foreground mt-2">
-              stratum+tcp://pool.automine.io:3333
+              Mining proxy will be available at startup
             </p>
           </div>
         </div>
