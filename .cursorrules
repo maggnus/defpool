@@ -1,0 +1,230 @@
+# DefPool Cursor Rules
+# Converted from .agent/workflows/ AI agent rules
+
+## Core Principles
+
+### API Design Standards
+- **ALWAYS follow RESTful API best practices** when creating or modifying endpoints
+- Use HTTP methods correctly: GET (retrieve), POST (create), PUT (update), DELETE (remove)
+- Use nouns for resources, never verbs: `/targets` not `/getTargets`
+- Always version APIs: `/api/v1/targets`
+- Use lowercase with hyphens for URLs: `/api/v1/mining-targets`
+- Return consistent JSON responses with proper HTTP status codes
+- Document all endpoints with OpenAPI/Swagger format
+
+### Coding Standards
+- **DRY Principle**: Extract common logic into reusable functions/modules
+- Use traits for shared behavior and abstract interfaces
+- Keep functions small (<50 lines) with single responsibility
+- Use dependency injection, not hardcoded dependencies
+- Remove all dead code, unused imports, and commented-out code
+- **Zero compiler warnings**: Fix all clippy and rustc warnings before committing
+- Use descriptive names for variables and functions
+
+### Commit Workflow
+- **AUTO-COMMIT**: Automatically commit and push after completing any major stage
+- Only commit when: build passes, zero warnings, tests pass, feature complete
+- Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`
+- Write descriptive commit messages, not "update" or "fix stuff"
+
+### Build Verification
+- **NEVER commit with warnings**: Always run `cargo build --release` before committing
+- Check both defpool-server and defpool-proxy for clean builds
+- Use `cargo clippy` to catch additional issues
+- Ensure zero warnings in all components
+
+### Release Notes
+- Update CHANGELOG.md after completing major features
+- Follow Keep a Changelog format with proper categories
+- Use semantic versioning (MAJOR.MINOR.PATCH)
+- Generate release notes before creating git tags
+
+## API Standards
+
+### URL Structure
+GOOD:
+- `GET /api/v1/targets` - List all targets
+- `GET /api/v1/targets/current` - Get current target
+- `POST /api/v1/targets` - Create target
+- `PUT /api/v1/targets/{id}` - Update target
+
+BAD:
+- `GET /getTargets` - No versioning, verb in URL
+- `GET /api/target` - Singular inconsistent
+- `POST /api/v1/createTarget` - Verb in URL
+
+### HTTP Status Codes
+- 200: OK (successful GET/PUT/PATCH/DELETE)
+- 201: Created (successful POST)
+- 204: No Content (successful DELETE)
+- 400: Bad Request (invalid data)
+- 401: Unauthorized (auth required)
+- 403: Forbidden (not authorized)
+- 404: Not Found (resource missing)
+- 409: Conflict (duplicate resource)
+- 500: Internal Server Error
+
+### Response Format
+```json
+// Success
+{
+  "data": {
+    "id": "123",
+    "name": "supportxmr",
+    "type": "pool"
+  }
+}
+
+// Error
+{
+  "error": {
+    "code": "INVALID_TARGET",
+    "message": "Target not found"
+  }
+}
+
+// Collection
+{
+  "data": [...],
+  "meta": {
+    "total": 100,
+    "page": 1,
+    "per_page": 10
+  }
+}
+```
+
+## Code Architecture
+
+### Module Organization
+```
+defpool-server/
+├── src/
+│   ├── main.rs           # Entry point
+│   ├── config.rs         # Configuration
+│   ├── api/              # API layer
+│   │   ├── mod.rs
+│   │   ├── routes.rs
+│   │   └── handlers.rs
+│   ├── profitability/    # Business logic
+│   │   ├── mod.rs
+│   │   ├── calculator.rs
+│   │   └── providers/
+│   └── state.rs          # Shared state
+```
+
+### Trait-Based Design
+```rust
+// Good: Abstract interface
+pub trait PriceProvider {
+    async fn get_price(&self, coin: &str) -> Result<f64>;
+}
+
+// Good: Concrete implementation
+pub struct CoinGeckoProvider;
+impl PriceProvider for CoinGeckoProvider { /* ... */ }
+
+// Good: Dependency injection
+pub struct ProfitCalculator<P: PriceProvider> {
+    price_provider: P,
+}
+```
+
+## Git Workflow
+
+### When to Commit
+COMMIT after:
+- ✅ Implementing a complete feature
+- ✅ Fixing a critical bug
+- ✅ Achieving zero warnings build
+- ✅ Updating documentation
+- ✅ Completing verification
+
+DO NOT commit:
+- ❌ Broken/non-compiling code
+- ❌ Code with compiler warnings
+- ❌ Failing tests
+- ❌ Mid-implementation work
+
+### Commit Messages
+```
+# Good examples
+feat: add multi-pool profitability calculation
+fix: resolve memory leak in connection handler
+docs: update API documentation with new endpoints
+refactor: extract price provider into trait
+chore: update dependencies to latest versions
+
+# Bad examples
+update
+fix stuff
+wip
+```
+
+## Quality Assurance
+
+### Pre-commit Checklist
+- [ ] `cargo build --release` passes with zero warnings
+- [ ] `cargo clippy` passes with zero warnings
+- [ ] All tests pass
+- [ ] CHANGELOG.md updated for significant changes
+- [ ] No dead code or unused imports
+- [ ] Code follows API standards
+- [ ] Functions are small and focused
+
+### Code Review Checklist
+- [ ] No code duplication (DRY)
+- [ ] Functions <50 lines, single responsibility
+- [ ] Clear separation of concerns
+- [ ] Traits used for abstractions
+- [ ] Dependencies injected, not hardcoded
+- [ ] Error handling with context
+- [ ] Zero compiler warnings
+- [ ] Tests for critical paths
+
+## Release Process
+
+### Changelog Format
+```markdown
+## [Unreleased]
+
+### Added
+- New features
+
+### Changed
+- Changes to existing functionality
+
+### Fixed
+- Bug fixes
+
+### Security
+- Security fixes
+```
+
+### Semantic Versioning
+- **MAJOR** (1.0.0): Breaking changes
+- **MINOR** (0.1.0): New features, backward compatible
+- **PATCH** (0.0.1): Bug fixes, backward compatible
+
+## Automation Rules
+
+### AI Assistant Rules
+1. **AUTO-COMMIT**: Commit and push after completing major work stages
+2. **ZERO WARNINGS**: Never commit code with compiler warnings
+3. **BUILD VERIFICATION**: Always run full build verification before committing
+4. **CHANGELOG UPDATES**: Update CHANGELOG.md after significant changes
+5. **API STANDARDS**: Always follow RESTful API design principles
+6. **CODE CLEANUP**: Remove dead code, optimize imports, extract reusable logic
+7. **DESCRIPTIVE COMMITS**: Use conventional commit format with meaningful messages
+
+### Build Verification Commands
+```bash
+# Quick verification
+cd defpool-server && cargo build --release --quiet && \
+cd ../defpool-proxy && cargo build --release --quiet && \
+echo "✅ All builds clean"
+
+# Full verification with warnings check
+cd defpool-server && cargo build --release -- -D warnings && \
+cd ../defpool-proxy && cargo build --release -- -D warnings
+```

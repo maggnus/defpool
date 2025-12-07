@@ -18,10 +18,8 @@ tokio-util = { version = "0.7", features = ["codec"] }
 serde_json = "1.0"
 futures = "0.3"
 
-# Official Stratum V2 libraries from crates.io
-binary_sv2 = "5.0.0"
-codec_sv2 = "4.0.0"
-framing_sv2 = "6.0.0"
-noise_sv2 = "1.4.0"
-const_sv2 = "3.0.0"
-buffer_sv2 = "2.0.0"
+# Stratum V2 libraries from stratum-mining/stratum
+stratum-core = "0.1.0"
+
+# Additional dependencies for key utilities
+bs58 = { version = "0.4.0", features = ["check"] }
