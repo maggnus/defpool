@@ -6,16 +6,11 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tracing::{error, info};
 use serde::Deserialize;
 
-use stratum_apps::{
-    key_utils::Secp256k1PublicKey,
-    network_helpers::noise_stream::NoiseTcpStream,
-    stratum_core::{
-        codec_sv2::HandshakeRole,
-        framing_sv2::framing::Frame,
-        noise_sv2::{Initiator, Responder},
-    },
-    utils::types::Message,
-};
+// Official Stratum V2 crates
+use codec_sv2::{HandshakeRole, Frame, Sv2Frame};
+use noise_sv2::{Initiator, Responder};
+use binary_sv2::Seq0255;
+
 
 #[derive(Debug, Deserialize)]
 struct Target {

@@ -43,23 +43,23 @@ services:
       - defpool-network
   # DefPool Proxy - Run locally for now (needs contrib dependencies)
   # To run: cd defpool-proxy && ./run.sh
-  # defpool-proxy:
-  #   build:
-  #     context: ..
-  #     dockerfile: defpool-proxy/Dockerfile
-  #   container_name: defpool-proxy
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - defpool-server
-  #   environment:
-  #     RUST_LOG: info
-  #     DEFPOOL_SERVER_ENDPOINT: http://defpool-server:3000
-  #   volumes:
-  #     - ../defpool-proxy/defpool-proxy.toml:/app/defpool-proxy.toml:ro
-  #   ports:
-  #     - "3333:3333"
-  #   networks:
-  #     - defpool-network
+  defpool-proxy:
+    build:
+      context: ..
+      dockerfile: defpool-proxy/Dockerfile
+    container_name: defpool-proxy
+    restart: unless-stopped
+    depends_on:
+      - defpool-server
+    environment:
+      RUST_LOG: info
+      DEFPOOL_SERVER_ENDPOINT: http://defpool-server:3000
+    volumes:
+      - ../defpool-proxy/defpool-proxy.toml:/app/defpool-proxy.toml:ro
+    ports:
+      - "3333:3333"
+    networks:
+      - defpool-network
 
 volumes:
   postgres_data:
