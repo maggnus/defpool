@@ -27,13 +27,13 @@ defpool-deploy/
 
 ```bash
 # Copy environment template
-cp defpool-deploy/config/.env.example .env
+cp env.example .env
 
-# Edit .env with your settings
+# Edit .env with your settings (optional - defaults provided)
 vim .env
 
 # Start all services
-cd defpool-deploy && docker-compose up -d
+docker-compose up -d
 
 # View logs
 docker-compose logs -f
@@ -41,6 +41,13 @@ docker-compose logs -f
 # Stop services
 docker-compose down
 ```
+
+### Access Points
+
+- **Web Dashboard**: http://localhost:8080
+- **API Server**: http://localhost:3000/api/v1/
+- **Mining Proxy**: stratum+tcp://localhost:3333
+- **Database**: localhost:5432
 
 ### Production
 
@@ -71,6 +78,12 @@ docker-compose ps
 ### DefPool Proxy
 - **Port**: 3333
 - **Protocol**: Stratum V1
+- **Depends on**: DefPool Server
+
+### DefPool Portal
+- **Port**: 8080
+- **Web Dashboard**: http://localhost:8080
+- **API Proxy**: Routes /api/* to DefPool Server
 - **Depends on**: DefPool Server
 
 ## Database Management
