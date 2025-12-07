@@ -6,6 +6,8 @@ This directory contains all deployment-related files for DefPool.
 
 ```
 defpool-deploy/
+├── docker-compose.yml   # Main Docker Compose configuration
+├── Makefile             # Build and deployment commands
 ├── docker/              # Docker-related files
 │   ├── Dockerfile.*     # Custom Dockerfiles
 │   └── .dockerignore    # Docker ignore patterns
@@ -18,6 +20,8 @@ defpool-deploy/
 │   └── nginx.conf       # Nginx configuration (if needed)
 └── README.md            # This file
 ```
+
+**Note:** `docker-compose.yml` and `Makefile` are symlinked to the project root for convenience.
 
 ## Quick Start
 
