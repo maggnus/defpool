@@ -1,5 +1,5 @@
 listen_address = "0.0.0.0:3000"
-profitability_check_interval_secs = 60
+profitability_check_interval_secs = 30
 switch_threshold_percent = 5.0
 
 [[targets]]

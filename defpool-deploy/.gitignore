@@ -1,0 +1,12 @@
+# Deployment files
+defpool-deploy/config/.env
+.env
+
+# Backups
+backups/
+*.sql
+*.sql.gz
+
+# Logs
+logs/
+*.log
