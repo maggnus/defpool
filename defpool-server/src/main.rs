@@ -5,6 +5,8 @@ mod profitability;
 mod tasks;
 mod db;
 mod accounting;
+mod payout;
+mod daemon;
 
 use axum::{
     routing::{get, post},
@@ -15,8 +17,11 @@ use config::Config;
 use state::AppState;
 use profitability::{ProfitabilityCalculator, providers::{CoinGeckoProvider, PoolApiProvider}};
 use tasks::profitability_monitor::start_profitability_monitor;
+use tasks::payout_processor::start_payout_processor;
+use tasks::balance_updater::start_balance_updater;
 use db::{create_pool, repository::ShareRepository};
 use accounting::AccountingService;
+use payout::BalanceCalculator;
 use std::sync::Arc;
 use tracing::info;
 
@@ -44,12 +49,16 @@ async fn main() -> anyhow::Result<()> {
     info!("Database connected successfully");
 
     // Initialize accounting service
-    let repository = Arc::new(ShareRepository::new(db_pool));
+    let repository = Arc::new(ShareRepository::new(db_pool.clone()));
     let accounting_service = Arc::new(AccountingService::new(repository));
     info!("Accounting service initialized");
 
-    // Initialize state with accounting service
-    let state = AppState::new(config.clone(), accounting_service);
+    // Initialize payout service
+    let payout_service = Arc::new(payout::PayoutService::new(db_pool.clone()));
+    info!("Payout service initialized");
+
+    // Initialize state with services
+    let state = AppState::new(config.clone(), accounting_service, payout_service.clone());
 
     // Initialize profitability providers
     info!("Initializing CoinGecko price provider");
@@ -65,7 +74,19 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     // Start background profitability monitor
-    start_profitability_monitor(state.clone(), calculator, config);
+    start_profitability_monitor(state.clone(), calculator, config.clone());
+
+    // Start background payout processor
+    start_payout_processor(payout_service.clone());
+
+    // Start background balance updater
+    let balance_calculator = Arc::new(BalanceCalculator::new(db_pool.clone()));
+    let coins: Vec<String> = config.targets.iter()
+        .map(|t| t.coin.clone())
+        .collect::<std::collections::HashSet<_>>()
+        .into_iter()
+        .collect();
+    start_balance_updater(balance_calculator, coins);
 
     // Build API routes with versioning
     let app = Router::new()
@@ -76,6 +97,11 @@ async fn main() -> anyhow::Result<()> {
         // Miner endpoints
         .route("/api/v1/miners/:wallet/stats", get(api::get_miner_stats))
         .route("/api/v1/miners/:wallet/workers", get(api::get_miner_workers))
+        .route("/api/v1/miners/:wallet/balances", get(api::get_miner_balances))
+        .route("/api/v1/miners/:wallet/balance/:coin", get(api::get_miner_balance))
+        .route("/api/v1/miners/:wallet/payout", post(api::request_payout))
+        .route("/api/v1/miners/:wallet/payouts", get(api::get_payout_history))
+        .route("/api/v1/miners/:wallet/payout-settings", axum::routing::put(api::update_payout_settings))
         // Share recording (internal)
         .route("/api/v1/shares", post(api::record_share))
         // Legacy routes (deprecated, for backward compatibility)

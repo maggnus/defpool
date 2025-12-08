@@ -2,22 +2,32 @@
 
 This directory contains all deployment-related files for DefPool.
 
+## Overview
+
+DefPool is a cryptocurrency mining pool system that provides a complete solution for managing mining operations. It consists of:
+
+- **DefPool Server**: Core API server handling mining pool logic, worker management, and payout calculations.
+- **DefPool Proxy**: Stratum proxy server that accepts mining connections and forwards them to the server.
+- **DefPool Portal**: Web dashboard for monitoring mining operations, viewing statistics, and managing accounts.
+
+This deployment setup provides a containerized environment using Docker Compose for easy development and production deployment.
+
 ## Structure
 
 ```
 defpool-deploy/
 ├── docker-compose.yml   # Main Docker Compose configuration
+├── env.example          # Environment variables template
 ├── Makefile             # Build and deployment commands
+├── config/              # Additional configuration templates
+│   └── .env.example     # Alternative environment template
+├── defpool-deploy/      # Nested deployment scripts
+│   └── scripts/
+│       └── init-db.sql/ # Database initialization scripts
 ├── docker/              # Docker-related files
-│   ├── Dockerfile.*     # Custom Dockerfiles
-│   └── .dockerignore    # Docker ignore patterns
 ├── scripts/             # Deployment scripts
-│   ├── init-db.sql      # Database initialization
-│   ├── backup.sh        # Backup script
-│   └── restore.sh       # Restore script
-├── config/              # Configuration templates
-│   ├── .env.example     # Environment variables template
-│   └── nginx.conf       # Nginx configuration (if needed)
+│   ├── backup.sh        # Database backup script
+│   └── restore.sh       # Database restore script
 └── README.md            # This file
 ```
 

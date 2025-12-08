@@ -5,8 +5,9 @@ use axum::{
 };
 use crate::state::{AppState, Target};
 use crate::profitability::ProfitabilityScore;
-use crate::db::models::{ShareSubmission, MinerStats, Worker};
+use crate::db::models::{ShareSubmission, MinerStats, Worker, Balance, Payout, PayoutRequest};
 use tracing::info;
+use serde::Deserialize;
 
 /// GET /api/v1/target - Get current mining target
 pub async fn get_current_target(State(state): State<AppState>) -> Json<Target> {
@@ -64,5 +65,88 @@ pub async fn record_share(
     match state.accounting_service.record_share(submission).await {
         Ok(_) => StatusCode::CREATED,
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+    }
+}
+
+/// GET /api/v1/miners/{wallet}/balances - Get miner's balances
+pub async fn get_miner_balances(
+    State(state): State<AppState>,
+    Path(wallet): Path<String>,
+) -> Result<Json<Vec<Balance>>, StatusCode> {
+    info!("API: Fetching balances for miner: {}", wallet);
+    
+    match state.payout_service.get_all_balances(&wallet).await {
+        Ok(balances) => Ok(Json(balances)),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
+/// GET /api/v1/miners/{wallet}/balance/{coin} - Get miner's balance for specific coin
+pub async fn get_miner_balance(
+    State(state): State<AppState>,
+    Path((wallet, coin)): Path<(String, String)>,
+) -> Result<Json<Balance>, StatusCode> {
+    info!("API: Fetching {} balance for miner: {}", coin, wallet);
+    
+    match state.payout_service.get_balance(&wallet, &coin).await {
+        Ok(Some(balance)) => Ok(Json(balance)),
+        Ok(None) => Err(StatusCode::NOT_FOUND),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
+/// POST /api/v1/miners/{wallet}/payout - Request a payout
+pub async fn request_payout(
+    State(state): State<AppState>,
+    Path(wallet): Path<String>,
+    Json(mut request): Json<PayoutRequest>,
+) -> Result<Json<Payout>, StatusCode> {
+    info!("API: Payout request for miner: {}", wallet);
+    
+    // Ensure wallet matches path
+    request.wallet_address = wallet;
+    
+    match state.payout_service.request_payout(request).await {
+        Ok(payout) => Ok(Json(payout)),
+        Err(_) => Err(StatusCode::BAD_REQUEST),
+    }
+}
+
+/// GET /api/v1/miners/{wallet}/payouts - Get payout history
+pub async fn get_payout_history(
+    State(state): State<AppState>,
+    Path(wallet): Path<String>,
+) -> Result<Json<Vec<Payout>>, StatusCode> {
+    info!("API: Fetching payout history for miner: {}", wallet);
+    
+    match state.payout_service.get_payout_history(&wallet, 50).await {
+        Ok(payouts) => Ok(Json(payouts)),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
+#[derive(Deserialize)]
+pub struct PayoutSettingsUpdate {
+    pub min_payout_threshold: f64,
+    pub payout_coin: String,
+    pub auto_exchange: bool,
+}
+
+/// PUT /api/v1/miners/{wallet}/payout-settings - Update payout settings
+pub async fn update_payout_settings(
+    State(state): State<AppState>,
+    Path(wallet): Path<String>,
+    Json(settings): Json<PayoutSettingsUpdate>,
+) -> Result<Json<crate::db::models::PayoutSettings>, StatusCode> {
+    info!("API: Updating payout settings for miner: {}", wallet);
+    
+    match state.payout_service.update_payout_settings(
+        &wallet,
+        settings.min_payout_threshold,
+        &settings.payout_coin,
+        settings.auto_exchange,
+    ).await {
+        Ok(settings) => Ok(Json(settings)),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 }

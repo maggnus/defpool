@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Payout System Foundation**
+  - Balance tracking per miner and coin
+  - Payout request API endpoints
+  - Payout settings (threshold, target coin, auto-exchange)
+  - Payout history tracking
+  - Background payout processor
+  - Background balance updater (5-minute intervals)
+  - Database schema for balances, payouts, and settings
+  
+- **Daemon Support Infrastructure**
+  - RPC client for coin daemon communication
+  - Block template fetching support
+  - Block submission support
+  - Network difficulty queries
+  - Address validation
+  
+- **New API Endpoints**
+  - `GET /api/v1/miners/{wallet}/balances` - Get all balances
+  - `GET /api/v1/miners/{wallet}/balance/{coin}` - Get specific coin balance
+  - `POST /api/v1/miners/{wallet}/payout` - Request payout
+  - `GET /api/v1/miners/{wallet}/payouts` - Get payout history
+  - `PUT /api/v1/miners/{wallet}/payout-settings` - Update payout settings
+
 ### Fixed
 - **Proxy Bidirectional Communication Bug**: Fixed `handle_sv1_upstream` discarding the downstream write handle, preventing SV2 responses from being sent back to miners
 - **Profitability Formula**: Corrected mining profitability calculation to include block time factor: `(Block Reward × Price × 86400) / (Difficulty × Block Time)`

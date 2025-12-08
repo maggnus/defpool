@@ -65,3 +65,49 @@ pub struct MinerStats {
     pub workers_count: i32,
     pub last_seen: Option<DateTime<Utc>>,
 }
+
+/// Balance database model
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct Balance {
+    pub id: i32,
+    pub miner_id: i32,
+    pub coin: String,
+    pub balance: f64,
+    pub pending_balance: f64,
+    pub total_paid: f64,
+    pub updated_at: DateTime<Utc>,
+}
+
+/// Payout database model
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct Payout {
+    pub id: i64,
+    pub miner_id: i32,
+    pub coin: String,
+    pub amount: f64,
+    pub tx_hash: Option<String>,
+    pub status: String,
+    pub created_at: DateTime<Utc>,
+    pub completed_at: Option<DateTime<Utc>>,
+    pub error_message: Option<String>,
+}
+
+/// Payout settings database model
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct PayoutSettings {
+    pub id: i32,
+    pub miner_id: i32,
+    pub min_payout_threshold: f64,
+    pub payout_coin: String,
+    pub auto_exchange: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+/// Payout request
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PayoutRequest {
+    pub wallet_address: String,
+    pub coin: String,
+    pub amount: Option<f64>, // None = pay all available balance
+}
