@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Share Recording from Proxy**
+  - Automatic share recording to server
+  - Wallet and worker extraction from SV1 login
+  - Asynchronous share submission (non-blocking)
+  - Current target name fetching
+  - Share validation tracking
+  
+- **Enhanced SV1 Passthrough**
+  - Line-based message parsing
+  - Login message handling with wallet extraction
+  - Submit message detection and logging
+  - Response validation (accept/reject tracking)
+  - Buffered I/O for better performance
+
 - **Payout System Foundation**
   - Balance tracking per miner and coin
   - Payout request API endpoints
