@@ -1,4 +1,5 @@
 use crate::config::Config;
+use crate::share_recorder::{ShareRecorder, ShareSubmission};
 use anyhow::{Context, Result};
 use std::sync::Arc;
 use tokio::net::{TcpListener, TcpStream};
@@ -366,6 +367,10 @@ async fn handle_v1_passthrough(
     downstream_socket: TcpStream,
     config: Arc<Config>,
 ) -> Result<()> {
+    use tokio::io::BufReader;
+    use tokio::io::AsyncBufReadExt;
+    use crate::stratum::Sv1Message;
+    
     // Fetch target from server
     info!("Fetching target from server: {}", config.server_endpoint);
     let target = fetch_target(&config.server_endpoint).await
@@ -382,31 +387,101 @@ async fn handle_v1_passthrough(
         .context("Failed to connect to upstream")?;
     info!("Connected to upstream: {}", target.address);
 
-    // Simple bidirectional passthrough
-    let (mut d_read, mut d_write) = downstream_socket.into_split();
-    let (mut u_read, mut u_write) = upstream_socket.into_split();
+    // Create share recorder
+    let share_recorder = Arc::new(ShareRecorder::new(config.server_endpoint.clone()));
+    let target_name = share_recorder.get_current_target().await
+        .unwrap_or_else(|_| "unknown".to_string());
 
-    let downstream_to_upstream = async {
-        let mut buf = vec![0u8; 8192];
+    // Split and wrap in buffered readers for line-based protocol
+    let (d_read, mut d_write) = downstream_socket.into_split();
+    let (u_read, mut u_write) = upstream_socket.into_split();
+    
+    let mut d_reader = BufReader::new(d_read);
+    let mut u_reader = BufReader::new(u_read);
+
+    let mut wallet_address = config.default_wallet.clone();
+    let mut worker_name = String::from("worker1");
+    let share_recorder_clone = share_recorder.clone();
+    let target_name_clone = target_name.clone();
+
+    let downstream_to_upstream = async move {
+        let mut line = String::new();
         loop {
-            let n = d_read.read(&mut buf).await?;
+            line.clear();
+            let n = d_reader.read_line(&mut line).await?;
             if n == 0 {
                 return Ok::<(), anyhow::Error>(());
             }
-            info!("V1 Downstream → Upstream: {} bytes", n);
-            u_write.write_all(&buf[..n]).await?;
+            
+            // Parse and log SV1 message
+            if let Ok(msg) = Sv1Message::from_json(&line) {
+                if let Some(method) = &msg.method {
+                    info!("V1 Miner → Pool: {}", method);
+                    
+                    // Extract wallet/worker from login
+                    if method == "login" {
+                        if let Some(params) = &msg.params {
+                            if let Some(serde_json::Value::String(login)) = params.first() {
+                                let parts: Vec<&str> = login.split(':').collect();
+                                if !parts.is_empty() {
+                                    wallet_address = Some(parts[0].to_string());
+                                    worker_name = parts.get(1).unwrap_or(&"worker1").to_string();
+                                    info!("Extracted wallet: {}, worker: {}", parts[0], worker_name);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Record share submissions
+                    if method == "submit" {
+                        let wallet = wallet_address.as_deref().unwrap_or("unknown");
+                        info!("Share submitted by {}/{}", wallet, worker_name);
+                        
+                        // Record share asynchronously (don't block on result)
+                        let recorder = share_recorder_clone.clone();
+                        let submission = ShareSubmission {
+                            wallet_address: wallet.to_string(),
+                            worker_name: worker_name.clone(),
+                            target_name: target_name_clone.clone(),
+                            difficulty: 1000.0, // TODO: Extract from job
+                            valid: true, // Will be validated by pool response
+                        };
+                        
+                        tokio::spawn(async move {
+                            if let Err(e) = recorder.record_share(submission).await {
+                                warn!("Failed to record share: {}", e);
+                            }
+                        });
+                    }
+                }
+            }
+            
+            u_write.write_all(line.as_bytes()).await?;
         }
     };
 
     let upstream_to_downstream = async {
-        let mut buf = vec![0u8; 8192];
+        let mut line = String::new();
         loop {
-            let n = u_read.read(&mut buf).await?;
+            line.clear();
+            let n = u_reader.read_line(&mut line).await?;
             if n == 0 {
                 return Ok::<(), anyhow::Error>(());
             }
-            info!("V1 Upstream → Downstream: {} bytes", n);
-            d_write.write_all(&buf[..n]).await?;
+            
+            // Parse and log SV1 response
+            if let Ok(msg) = Sv1Message::from_json(&line) {
+                if let Some(method) = &msg.method {
+                    info!("V1 Pool → Miner: {}", method);
+                } else if msg.is_response() {
+                    // Check for share acceptance/rejection
+                    if let Some(error) = &msg.error {
+                        warn!("Share rejected: {:?}", error);
+                    }
+                }
+            }
+            
+            d_write.write_all(line.as_bytes()).await?;
         }
     };
 

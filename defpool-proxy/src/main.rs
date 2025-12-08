@@ -1,6 +1,7 @@
 mod config;
 mod proxy;
 mod stratum;
+mod share_recorder;
 
 use anyhow::Result;
 use clap::Parser;
