@@ -24,6 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Network difficulty queries
   - Address validation
   
+- **Stratum Protocol Translation Framework**
+  - SV1 message parser and serializer
+  - SV2 message type detection
+  - Protocol translator with job ID mapping
+  - Login and submit handling
+  - Foundation for full SV2↔SV1 translation
+  
 - **New API Endpoints**
   - `GET /api/v1/miners/{wallet}/balances` - Get all balances
   - `GET /api/v1/miners/{wallet}/balance/{coin}` - Get specific coin balance

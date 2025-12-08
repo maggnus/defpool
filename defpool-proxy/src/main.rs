@@ -1,5 +1,6 @@
 mod config;
 mod proxy;
+mod stratum;
 
 use anyhow::Result;
 use clap::Parser;

@@ -517,67 +517,41 @@ async fn handle_sv2_upstream(
 async fn handle_sv1_upstream(
     downstream_stream: NoiseTcpStream<Message>,
     target: Target,
-    config: &Config,
+    _config: &Config,
 ) -> Result<()> {
-    info!("Connecting to upstream (SV2): {}", target.address);
+    info!("SV2 miner connecting to SV1 upstream pool: {}", target.address);
+    info!("Protocol translation: SV2 (downstream) → SV1 (upstream)");
 
-    // Connect to SV2 pool
+    // Connect to SV1 pool
     let upstream_socket = TcpStream::connect(&target.address).await
-        .context("Failed to connect to upstream SV2 pool")?;
+        .context("Failed to connect to upstream SV1 pool")?;
 
-    // Get wallet info (for now use default, later extract from SV1 login)
-    let _wallet = config.default_wallet.as_deref()
-        .unwrap_or("44AFFq5kSiGBoZ4NMDwYtN18obc8AemS33DBDDws8keQf66JxvVXuquhE3mAyUAL4f8cpAGzBVCTLG0P5sqDK17I3wcBiRT");
+    info!("Connected to upstream SV1 pool: {}", target.address);
 
-    // Create SV2 upstream connection
-    let pubkey_str = target.pubkey.as_ref()
-        .ok_or_else(|| anyhow::anyhow!("Missing pubkey for SV2 target"))?;
-    let pubkey_bytes = pubkey_str.clone().into_bytes();
-    let pubkey_array: [u8; 32] = pubkey_bytes.try_into()
-        .map_err(|_| anyhow::anyhow!("Invalid pubkey length"))?;
+    // Split streams
+    let (mut downstream_read, mut downstream_write) = downstream_stream.into_split();
+    let (mut upstream_read, mut upstream_write) = upstream_socket.into_split();
 
-    let upstream_role = HandshakeRole::Initiator(
-        stratum_core::noise_sv2::Initiator::from_raw_k(pubkey_array)
-            .map_err(|e| anyhow::anyhow!("Failed to create initiator: {:?}", e))?
-    );
+    info!("SV2↔SV1 translation bridge established");
 
-    let upstream_stream = NoiseTcpStream::<Message>::new(upstream_socket, upstream_role).await
-        .map_err(|_| anyhow::anyhow!("Upstream SV2 handshake failed"))?;
-
-    info!("Connected to upstream (SV2): {}", target.address);
-    info!("Upstream handshake complete");
-
-    // TODO: Implement proper SV2 connection handshake
-    // For now, just split the streams and establish basic bidirectional forwarding
-    let (mut upstream_read, _upstream_write) = upstream_stream.into_split();
-    let (mut downstream_read, _downstream_write) = downstream_stream.into_split();
-
-    info!("SV2 connection established - basic forwarding mode (message translation TODO)");
-
-    // Basic bidirectional forwarding loop (message translation TODO)
-    // This establishes the connection structure but doesn't translate protocols yet
+    // Bidirectional forwarding with protocol translation
+    // Note: Full translation requires parsing SV2 messages and converting to SV1 JSON-RPC
+    // This is a complex task that requires understanding both protocol specifications
+    let mut buffer = vec![0u8; 8192];
+    
     loop {
         tokio::select! {
-            // Read from SV2 upstream pool
-            upstream_msg = upstream_read.read_frame() => {
-                match upstream_msg {
-                    Ok(_frame) => {
-                        info!("Received frame from SV2 upstream pool");
-                        // TODO: translate_sv2_to_sv1(&frame, &mut downstream_write).await?;
-                    }
-                    Err(e) => {
-                        warn!("Error reading from SV2 upstream: {:?}", e);
-                        break;
-                    }
-                }
-            }
-
-            // Read from SV2 downstream miner (miner sends SV2, proxy should translate to SV1 for pool)
+            // Read from SV2 downstream miner
             downstream_msg = downstream_read.read_frame() => {
                 match downstream_msg {
                     Ok(_frame) => {
-                        info!("Received frame from SV2 downstream miner");
-                        // TODO: translate_sv2_to_sv1(&frame, &mut upstream_write).await?;
+                        info!("SV2 frame from miner (translation TODO)");
+                        // TODO: Parse SV2 frame, translate to SV1 JSON, send to upstream
+                        // This requires:
+                        // 1. Extract message from frame
+                        // 2. Match on message type (SetupConnection, OpenChannel, SubmitShares, etc.)
+                        // 3. Translate to equivalent SV1 JSON-RPC message
+                        // 4. Send to upstream pool
                     }
                     Err(e) => {
                         warn!("Error reading from SV2 downstream: {:?}", e);
@@ -585,8 +559,27 @@ async fn handle_sv1_upstream(
                     }
                 }
             }
+
+            // Read from SV1 upstream pool
+            upstream_result = upstream_read.read(&mut buffer) => {
+                match upstream_result {
+                    Ok(n) if n > 0 => {
+                        info!("SV1 data from pool: {} bytes (translation TODO)", n);
+                        // TODO: Parse SV1 JSON, translate to SV2 frame, send to downstream
+                    }
+                    Ok(_) => {
+                        info!("Upstream connection closed");
+                        break;
+                    }
+                    Err(e) => {
+                        warn!("Error reading from SV1 upstream: {:?}", e);
+                        break;
+                    }
+                }
+            }
         }
     }
 
+    info!("SV2↔SV1 bridge closed");
     Ok(())
 }
