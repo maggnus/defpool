@@ -12,6 +12,7 @@ pub struct Sv1Message {
 }
 
 /// Stratum V1 methods
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum Sv1Method {
     Login,
@@ -21,6 +22,7 @@ pub enum Sv1Method {
     Unknown(String),
 }
 
+#[allow(dead_code)]
 impl Sv1Method {
     pub fn from_str(s: &str) -> Self {
         match s {
@@ -120,6 +122,7 @@ impl Sv1Message {
     }
 
     /// Create an error response
+    #[allow(dead_code)]
     pub fn error_response(id: Value, code: i32, message: &str) -> Self {
         Self {
             id: Some(id),

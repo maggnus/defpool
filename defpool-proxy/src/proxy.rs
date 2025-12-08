@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use std::sync::Arc;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tracing::{debug, error, info, warn};
+use tracing::{error, info, warn};
 use serde::Deserialize;
 
 // Stratum V2 crates
@@ -604,8 +604,8 @@ async fn handle_sv1_upstream(
     info!("Connected to upstream SV1 pool: {}", target.address);
 
     // Split streams
-    let (mut downstream_read, mut downstream_write) = downstream_stream.into_split();
-    let (mut upstream_read, mut upstream_write) = upstream_socket.into_split();
+    let (mut downstream_read, _downstream_write) = downstream_stream.into_split();
+    let (mut upstream_read, _upstream_write) = upstream_socket.into_split();
 
     info!("SV2↔SV1 translation bridge established");
 

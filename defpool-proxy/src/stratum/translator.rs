@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex};
 use tracing::{debug, warn};
 
 /// Translator between Stratum V1 and V2 protocols
+#[allow(dead_code)]
 pub struct StratumTranslator {
     /// Map SV1 job IDs to SV2 job IDs
     job_id_map: Arc<Mutex<HashMap<String, String>>>,
@@ -16,6 +17,7 @@ pub struct StratumTranslator {
     worker_name: Option<String>,
 }
 
+#[allow(dead_code)]
 impl StratumTranslator {
     pub fn new() -> Self {
         Self {
