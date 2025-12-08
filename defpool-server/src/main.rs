@@ -94,6 +94,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/target", get(api::get_current_target))
         .route("/api/v1/targets", get(api::list_targets))
         .route("/api/v1/targets/current", get(api::get_current_target_name))
+        .route("/api/v1/stats", get(api::get_pool_stats))
         // Miner endpoints
         .route("/api/v1/miners/:wallet/stats", get(api::get_miner_stats))
         .route("/api/v1/miners/:wallet/workers", get(api::get_miner_workers))

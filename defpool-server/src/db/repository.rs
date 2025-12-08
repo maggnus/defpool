@@ -165,4 +165,64 @@ impl ShareRepository {
 
         Ok(workers)
     }
+
+    /// Get pool-wide statistics
+    pub async fn get_pool_stats(&self) -> Result<crate::api::PoolStats> {
+        // Total miners
+        let total_miners: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*)::bigint FROM miners"
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        // Active miners (seen in last hour)
+        let active_miners: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*)::bigint FROM miners WHERE last_seen > NOW() - INTERVAL '1 hour'"
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        // Total workers
+        let total_workers: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*)::bigint FROM workers"
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        // Active workers (seen in last hour)
+        let active_workers: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*)::bigint FROM workers WHERE last_seen > NOW() - INTERVAL '1 hour'"
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        // Total shares in last 24 hours
+        let total_shares_24h: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*)::bigint FROM shares WHERE created_at > NOW() - INTERVAL '24 hours'"
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        // Pool hashrate (last 10 minutes)
+        let pool_hashrate: f64 = sqlx::query_scalar(
+            r#"
+            SELECT COALESCE(SUM(difficulty), 0.0)::float8 / 600.0
+            FROM shares
+            WHERE created_at > NOW() - INTERVAL '10 minutes'
+              AND valid = true
+            "#
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(crate::api::PoolStats {
+            total_miners,
+            active_miners,
+            total_workers,
+            active_workers,
+            total_shares_24h,
+            pool_hashrate,
+            current_target: "unknown".to_string(), // Will be filled by API handler
+        })
+    }
 }

@@ -7,7 +7,7 @@ use crate::state::{AppState, Target};
 use crate::profitability::ProfitabilityScore;
 use crate::db::models::{ShareSubmission, MinerStats, Worker, Balance, Payout, PayoutRequest};
 use tracing::info;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// GET /api/v1/target - Get current mining target
 pub async fn get_current_target(State(state): State<AppState>) -> Json<Target> {
@@ -66,6 +66,31 @@ pub async fn record_share(
         Ok(_) => StatusCode::CREATED,
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
     }
+}
+
+/// GET /api/v1/stats - Get pool statistics
+pub async fn get_pool_stats(State(state): State<AppState>) -> Result<Json<PoolStats>, StatusCode> {
+    info!("API: Fetching pool statistics");
+    
+    match state.accounting_service.get_pool_stats().await {
+        Ok(mut stats) => {
+            // Add current target name
+            stats.current_target = state.current_target.read().unwrap().clone();
+            Ok(Json(stats))
+        }
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
+#[derive(Serialize)]
+pub struct PoolStats {
+    pub total_miners: i64,
+    pub active_miners: i64,
+    pub total_workers: i64,
+    pub active_workers: i64,
+    pub total_shares_24h: i64,
+    pub pool_hashrate: f64,
+    pub current_target: String,
 }
 
 /// GET /api/v1/miners/{wallet}/balances - Get miner's balances

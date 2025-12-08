@@ -45,4 +45,9 @@ impl AccountingService {
     pub async fn get_miner_workers(&self, wallet_address: &str) -> Result<Vec<Worker>> {
         self.repository.get_miner_workers(wallet_address).await
     }
+
+    /// Get pool-wide statistics
+    pub async fn get_pool_stats(&self) -> Result<crate::api::PoolStats> {
+        self.repository.get_pool_stats().await
+    }
 }
