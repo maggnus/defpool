@@ -1,7 +1,8 @@
 mod config;
+mod job_tracker;
 mod proxy;
-mod stratum;
 mod share_recorder;
+mod stratum;
 
 use anyhow::Result;
 use clap::Parser;

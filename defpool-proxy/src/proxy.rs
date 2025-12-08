@@ -299,11 +299,17 @@ pub async fn start(config: Config) -> Result<()> {
     let listener = TcpListener::bind(config.listen_address).await?;
     info!("Proxy listening for miners on: {}", config.listen_address);
 
-    // Verify connection to server on startup
-    info!("Verifying connection to server...");
-    let initial_target = fetch_target(&config.server_endpoint).await
-        .context("Failed to connect to server on startup")?;
-    info!("Successfully connected to server. Current target: {} (Protocol: {})", initial_target.address, initial_target.protocol);
+    // Try to verify connection to server on startup (non-fatal if fails)
+    info!("Checking connection to server at {}...", config.server_endpoint);
+    match fetch_target(&config.server_endpoint).await {
+        Ok(target) => {
+            info!("✓ Server connected. Current target: {} (Protocol: {})", target.address, target.protocol);
+        }
+        Err(e) => {
+            warn!("⚠ Could not connect to server: {}. Will retry on miner connections.", e);
+            warn!("  Make sure defpool-server is running at {}", config.server_endpoint);
+        }
+    }
 
     let config = Arc::new(config);
 
